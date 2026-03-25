@@ -63,8 +63,7 @@ jobs:
             library(motus)
             library(dplyr)
             library(jsonlite)
-
-            Sys.setenv(TZ = "UTC")
+            Sys.setenv(TZ = 'UTC')
             Sys.setenv(MOTUS_USER = Sys.getenv('MOTUS_USER'))
             Sys.setenv(MOTUS_PASSWORD = Sys.getenv('MOTUS_PASS'))
             
