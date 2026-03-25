@@ -62,9 +62,10 @@ jobs:
             library(motus)
             library(dplyr)
             library(jsonlite)
+            
             Sys.setenv(TZ = 'UTC')
-            Sys.setenv(MOTUS_USER = Sys.getenv('MOTUS_USER'))
-            Sys.setenv(MOTUS_PASSWORD = Sys.getenv('MOTUS_PASS'))
+            Motus$userLogin <- Sys.getenv('MOTUS_USER')
+            Motus$userPassword <- Sys.getenv('MOTUS_PASS')
             
             dir.create('data', showWarnings = FALSE)
             
