@@ -1,0 +1,40 @@
+{
+  "updated": "2025-10-10T06:00:00Z",
+  "detections": [
+    {
+      "date": "2025-10-10T02:14:33Z",
+      "commonName": "Yellow-rumped Warbler",
+      "scientificName": "Setophaga coronata",
+      "tagId": "CTT-1234",
+      "project": "Atlantic Flyway Warbler Study"
+    },
+    {
+      "date": "2025-10-09T23:47:11Z",
+      "commonName": "Swainson's Thrush",
+      "scientificName": "Catharus ustulatus",
+      "tagId": "CTT-5678",
+      "project": "Thrush Migration Network"
+    },
+    {
+      "date": "2025-10-09T21:03:55Z",
+      "commonName": "American Woodcock",
+      "scientificName": "Scolopax minor",
+      "tagId": "SG-9012",
+      "project": "Woodcock Migration Study"
+    },
+    {
+      "date": "2025-10-08T18:22:40Z",
+      "commonName": "Black-throated Blue Warbler",
+      "scientificName": "Setophaga caerulescens",
+      "tagId": "CTT-3456",
+      "project": "Atlantic Flyway Warbler Study"
+    },
+    {
+      "date": "2025-10-07T03:58:17Z",
+      "commonName": "Common Nighthawk",
+      "scientificName": "Chordeiles minor",
+      "tagId": "SG-7890",
+      "project": "Nightjar Migration Network"
+    }
+  ]
+}
