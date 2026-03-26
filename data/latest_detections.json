@@ -4,7 +4,7 @@
     {
       "id": "CTT-1234_2025-10-10T02:14:33Z",
       "date": "2025-10-10T02:14:33Z",
-      "commonName": "Yellow-rumped Warbler",
+      "commonName": "",
       "scientificName": "Setophaga coronata",
       "tagId": "CTT-1234",
       "project": "Atlantic Flyway Warbler Study",
@@ -18,7 +18,7 @@
       "id": "CTT-5678_2025-10-09T23:47:11Z",
       "date": "2025-10-09T23:47:11Z",
       "commonName": "Swainson's Thrush",
-      "scientificName": "Catharus ustulatus",
+      "scientificName": "",
       "tagId": "CTT-5678",
       "project": "Thrush Migration Network",
       "sex": "F",
@@ -30,8 +30,8 @@
     {
       "id": "SG-9012_2025-10-09T21:03:55Z",
       "date": "2025-10-09T21:03:55Z",
-      "commonName": "American Woodcock",
-      "scientificName": "Scolopax minor",
+      "commonName": null,
+      "scientificName": "",
       "tagId": "SG-9012",
       "project": "Woodcock Migration Study",
       "sex": null,
