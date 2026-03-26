@@ -77,8 +77,6 @@ jobs:
             motus:::sessionVariable(name = 'userPassword', val = Sys.getenv('MOTUS_PASS'))
             
             dir.create('data', showWarnings = FALSE)
-            
-            message('Login set to: ', Motus$userLogin)
 
             recv <- tagme(
               'CTT-V3023D415E26',
