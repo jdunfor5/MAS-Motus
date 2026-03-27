@@ -1,6 +1,19 @@
 {
-  "updated": "2026-03-26T06:00:00Z",
+  "updated": "2026-03-27T15:50:32Z",
   "detections": [
+    {
+      "id": "229_2025-10-10T02:52:24Z",
+      "date": "2025-10-10T02:52:24Z",
+      "commonName": "Wood Thrush",
+      "scientificName": "Hylocichla mustelina",
+      "tagId": "229",
+      "project": "WothParty_VA",
+      "sex": "M",
+      "age": "ad",
+      "tagDepLat": 36.7195,
+      "tagDepLon": -78.7276,
+      "locationName": null
+    },
     {
       "id": "CTT-1234_2025-10-10T02:14:33Z",
       "date": "2025-10-10T02:14:33Z",
@@ -41,6 +54,19 @@
       "locationName": null
     },
     {
+      "id": "58.1_2025-10-09T01:20:47Z",
+      "date": "2025-10-09T01:20:47Z",
+      "commonName": "Wood Thrush",
+      "scientificName": "Hylocichla mustelina",
+      "tagId": "58.1",
+      "project": "WOTHParty_MA",
+      "sex": "M",
+      "age": "ad",
+      "tagDepLat": 42.3384,
+      "tagDepLon": -72.5539,
+      "locationName": null
+    },
+    {
       "id": "CTT-3456_2025-10-08T18:22:40Z",
       "date": "2025-10-08T18:22:40Z",
       "commonName": "Black-throated Blue Warbler",
@@ -64,6 +90,19 @@
       "age": null,
       "tagDepLat": 38.895,
       "tagDepLon": -77.037,
+      "locationName": null
+    },
+    {
+      "id": "528_2025-10-02T03:59:54Z",
+      "date": "2025-10-02T03:59:54Z",
+      "commonName": "Wood Thrush",
+      "scientificName": "Hylocichla mustelina",
+      "tagId": "528",
+      "project": "WOTHParty_NH",
+      "sex": "F",
+      "age": "imm",
+      "tagDepLat": 43.1471,
+      "tagDepLon": -72.3932,
       "locationName": null
     }
   ]
