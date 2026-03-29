@@ -93,10 +93,6 @@ jobs:
               collect() %>%
               select(deployID, sex, age)
 
-            proj_ids <- tbl(recv, 'projects') %>%
-              collect() %>%
-              select(id, name)
-
             new_detections <- tbl(recv, 'alltags') %>%
               filter(motusFilter == 1) %>%
               collect() %>%
@@ -104,7 +100,6 @@ jobs:
               slice_min(ts, n = 1) %>%
               ungroup() %>%
               left_join(tag_deps, by = c('tagDeployID' = 'deployID')) %>%
-              left_join(proj_ids, by = c('tagProjID' = 'id')) %>%
               select(
                 date = ts,
                 commonName = speciesEN,
