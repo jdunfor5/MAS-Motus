@@ -96,7 +96,7 @@ jobs:
             proj_ids <- tbl(recv, 'projs') %>%
               collect() %>%
               select(id, name)
-              
+            
             new_detections <- tbl(recv, 'alltags') %>%
               filter(motusFilter == 1) %>%
               collect() %>%
@@ -111,7 +111,7 @@ jobs:
                 scientificName = speciesSci,
                 tagId = mfgID,
                 project = tagProjName,
-                projectId = tagProjID,
+                projectId = id,
                 sex = sex,
                 age = age,
                 tagDepLat = tagDepLat,
