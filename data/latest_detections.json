@@ -1,5 +1,5 @@
 {
-  "updated": "2026-03-29T07:13:30Z",
+  "updated": "2026-03-29T21:46:23Z",
   "detections": [
     {
       "id": "229_2025-10-10T02:52:24Z",
@@ -12,7 +12,8 @@
       "age": "ad",
       "tagDepLat": 36.7195,
       "tagDepLon": -78.7276,
-      "locationName": null
+      "locationName": null,
+      "projectId": null
     },
     {
       "id": "58.1_2025-10-09T01:20:47Z",
@@ -25,7 +26,8 @@
       "age": "ad",
       "tagDepLat": 42.3384,
       "tagDepLon": -72.5539,
-      "locationName": null
+      "locationName": null,
+      "projectId": null
     },
     {
       "id": "528_2025-10-02T03:59:54Z",
@@ -38,7 +40,8 @@
       "age": "imm",
       "tagDepLat": 43.1471,
       "tagDepLon": -72.3932,
-      "locationName": null
+      "locationName": null,
+      "projectId": null
     }
   ]
 }
