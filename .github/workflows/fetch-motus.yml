@@ -92,7 +92,8 @@ jobs:
               'CTT-V3023D415E26',
               new = FALSE,
               update = TRUE,
-              dir = 'data/'
+              dir = 'data/',
+              skipNodes = TRUE
             )
             
             metadata(recv)
