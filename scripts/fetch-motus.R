@@ -1,6 +1,7 @@
 library(motus)
 library(dplyr)
 library(jsonlite)
+library(httr)
 
 Sys.setenv(TZ = 'UTC')
 
@@ -73,6 +74,47 @@ if (nrow(existing_detections) > 0) {
   combined <- new_detections %>%
     arrange(desc(date))
 }
+
+# Reverse geocode missing locationNames
+geocode_cache <- list()
+
+reverse_geocode <- function(lat, lon) {
+  key <- paste0(round(lat, 4), ',', round(lon, 4))
+  if (!is.null(geocode_cache[[key]])) return(geocode_cache[[key]])
+
+  Sys.sleep(1)
+  tryCatch({
+    res <- httr::GET(
+      url = paste0(
+        'https://nominatim.openstreetmap.org/reverse?lat=', lat,
+        '&lon=', lon,
+        '&format=json'
+      ),
+      httr::add_headers('User-Agent' = 'MAS-Motus/1.0 (meckbirds.org)')
+    )
+    addr <- fromJSON(httr::content(res, as = 'text', encoding = 'UTF-8'))$address
+    location <- paste(
+      Filter(Negate(is.null), list(
+        if (!is.null(addr$city)) addr$city else
+        if (!is.null(addr$town)) addr$town else
+        if (!is.null(addr$village)) addr$village else
+        if (!is.null(addr$county)) addr$county else NULL,
+        if (!is.null(addr$state)) addr$state else NULL
+      )),
+      collapse = ', '
+    )
+    location <- if (nchar(location) == 0) NA else location
+    geocode_cache[[key]] <<- location
+    location
+  }, error = function(e) NA)
+}
+
+combined <- combined %>%
+  mutate(locationName = ifelse(
+    is.na(locationName) & !is.na(tagDepLat) & !is.na(tagDepLon),
+    mapply(reverse_geocode, tagDepLat, tagDepLon),
+    locationName
+  ))
 
 output <- list(
   updated = format(Sys.time(), '%Y-%m-%dT%H:%M:%SZ', tz = 'UTC'),
