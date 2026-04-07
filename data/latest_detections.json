@@ -13,7 +13,7 @@
       "tagDepLat": 36.7195,
       "tagDepLon": -78.7276,
       "id": "229_2025-10-10T02:52:24Z",
-      "locationName": "Halifax County"
+      "locationName": "pending"
     },
     {
       "date": "2025-10-09T01:20:47Z",
@@ -27,7 +27,7 @@
       "tagDepLat": 42.3384,
       "tagDepLon": -72.5539,
       "id": "58.1_2025-10-09T01:20:47Z",
-      "locationName": "Hadley"
+      "locationName": "pending"
     },
     {
       "date": "2025-10-02T03:59:54Z",
@@ -41,7 +41,7 @@
       "tagDepLat": 43.1471,
       "tagDepLon": -72.3932,
       "id": "528_2025-10-02T03:59:54Z",
-      "locationName": "Langdon"
+      "locationName": "pending"
     }
   ]
 }
