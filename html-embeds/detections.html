@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>l
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: transparent;
+    color: #2c2c2a;
+    padding: 0.5rem 0;
+  }
+
+  #error-msg {
+    font-size: 14px;
+    color: #a32d2d;
+    display: none;
+    padding: 1rem;
+    border: 0.5px solid #f09595;
+    border-radius: 8px;
+    background: #fcebeb;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    height: 600px;
+    padding-right: 4px;
+  }
+
+  .card {
+    background: #ffffff;
+    border: 0.5px solid #d3d1c7;
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.35s ease, transform 0.35s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    align-self: start;
+  }
+
+  .card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .card:hover {
+    border-color: #3b6d11;
+    box-shadow: 0 2px 12px rgba(59,109,17,0.08);
+  }
+
+  .card-common {
+    font-family: 'Lora', serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #27500a;
+    margin-bottom: 2px;
+    line-height: 1.3;
+  }
+
+  .card-scientific {
+    font-family: 'Lora', serif;
+    font-size: 12px;
+    font-style: italic;
+    color: #888780;
+    margin-bottom: 10px;
+  }
+
+  .card-divider {
+    border: none;
+    border-top: 0.5px solid #e8e6df;
+    margin-bottom: 10px;
+  }
+
+  .card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .meta-label {
+    font-size: 11px;
+    color: #b4b2a9;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .meta-value {
+    font-size: 12px;
+    color: #5f5e5a;
+    text-align: right;
+    line-height: 1.3;
+  }
+
+  .skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .skeleton-card {
+    background: #f1efe8;
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  .skeleton-line {
+    background: #d3d1c7;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+</style>
+</head>
+<body>
+
+<div id="error-msg">Unable to load detection data. Please try again later.</div>
+
+<div id="skeleton" class="skeleton-grid">
+  <div class="skeleton-card"><div class="skeleton-line" style="height:14px;width:40%;"></div><div class="skeleton-line" style="height:18px;width:80%;"></div><div class="skeleton-line" style="height:12px;width:60%;"></div></div>
+  <div class="skeleton-card"><div class="skeleton-line" style="height:14px;width:40%;"></div><div class="skeleton-line" style="height:18px;width:75%;"></div><div class="skeleton-line" style="height:12px;width:55%;"></div></div>
+  <div class="skeleton-card"><div class="skeleton-line" style="height:14px;width:40%;"></div><div class="skeleton-line" style="height:18px;width:85%;"></div><div class="skeleton-line" style="height:12px;width:65%;"></div></div>
+</div>
+
+<div id="grid" class="grid" style="display:none;"></div>
+
+<script>
+  const JSON_URL = 'https://raw.githubusercontent.com/jdunfor5/MAS-Motus/main/data/latest_detections.json?t=' + Date.now();
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function formatTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'America/New_York'
+    });
+  }
+
+  function val(v, fallback) {
+    return (v !== null && v !== undefined && v !== '') ? v : fallback;
+  }
+
+  function allAboutBirdsUrl(commonName) {
+    if (!commonName) return null;
+    const slug = commonName.trim().replace(/\s+/g, '_');
+    return `https://www.allaboutbirds.org/guide/${slug}/overview`;
+  }
+  
+  function buildCard(det, index) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.transitionDelay = (index * 60) + 'ms';
+
+    const common = val(det.commonName, 'Unknown species');
+    const aabUrl= allAboutBirdsUrl(common);
+    const commonDisplay = aabUrl 
+      ? `<a href="${aabUrl}" target="_blank" rel="noopener" style="color:#27500a;text-decoration:none;border-bottom:1px dotted #3b6d11;">${common}</a>`
+      : common;
+
+    const sci = val(det.scientificName, '');
+    const date = det.date ? formatDate(det.date) : 'Unknown';
+    const time = det.date ? formatTime(det.date) : 'Unknown';
+    const project = val(det.project, 'Unknown');
+    const tagId = val(det.tagId, 'Unknown');
+
+    const projectId = det.projectId;
+    const projectDisplay = projectId
+      ? `<a href="https://motus.org/dashboard/#e=profile&d=projects&s=${projectId}" target="_blank" rel="noopener" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${project}</a>`
+      : project;
+
+    let sex = val(det.sex, 'Unknown');
+    if (sex === 'F') sex = 'Female';
+    else if (sex === 'M') sex = 'Male';
+
+    let age = val(det.age, 'Unknown');
+    if (age === 'ad') age = 'Adult';
+    else if (age === 'imm') age = 'Immature';
+
+    const location = val(det.locationName, 'Pending');
+    const lat = det.tagDepLat;
+    const lon = det.tagDepLon;
+    const locationDisplay = (lat && lon)
+      ? `<a href="https://motus.org/dashboard/#e=profile&d=tags&s=${tagId}" target="_blank" rel="noopener" style="color:#5f5e5a;text-decoration:none;border-bottom:1px dotted #b4b2a9;">${location}</a>`
+      : location;
+
+    card.innerHTML = `
+      <div class="card-common">${commonDisplay}</div>
+      <div class="card-scientific">${sci}</div>
+      <hr class="card-divider">
+      <div class="card-meta">
+        <div class="meta-row">
+          <span class="meta-label">Date</span>
+          <span class="meta-value">${date}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Time</span>
+          <span class="meta-value">${time} ET</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tag</span>
+          <span class="meta-value">${tagId}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Project</span>
+          <span class="meta-value">${projectDisplay}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Sex</span>
+          <span class="meta-value">${sex}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Age</span>
+          <span class="meta-value">${age}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Banded near</span>
+          <span class="meta-value">${locationDisplay}</span>
+        </div>
+      </div>
+    `;
+
+    return card;
+  }
+
+  async function loadDetections() {
+    try {
+      const res = await fetch(JSON_URL);
+      if (!res.ok) throw new Error('Network response was not ok');
+      const data = await res.json();
+
+      document.getElementById('skeleton').style.display = 'none';
+
+      const grid = document.getElementById('grid');
+      grid.style.display = 'grid';
+
+      data.detections.forEach((det, i) => {
+        grid.appendChild(buildCard(det, i));
+      });
+
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.card').forEach(c => c.classList.add('visible'));
+      });
+
+    } catch (err) {
+      document.getElementById('skeleton').style.display = 'none';
+      document.getElementById('updated').textContent = '';
+      document.getElementById('error-msg').style.display = 'block';
+    }
+  }
+
+  loadDetections();
+</script>
+</body>
+</html>
