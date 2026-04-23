@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: transparent;
+    padding: 0.5rem 0;
+  }
+
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stat-card {
+  background: #ffffff;
+  border: 0.5px solid #d3d1c7;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: #27500a;/*#888780;*/
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 5px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: #27500a;
+    line-height: 1.1;
+  }
+
+  .stat-value.stat-date {
+    font-size: 15px;
+  }
+
+  .skeleton-line {
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    margin-bottom: 6px;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stats-bar" class="stats-bar">
+  <div class="stat-card">
+    <div class="skeleton-line" style="height:11px;width:65%;"></div>
+    <div class="skeleton-line" style="height:22px;width:35%;margin-bottom:0;"></div>
+  </div>
+  <div class="stat-card">
+    <div class="skeleton-line" style="height:11px;width:65%;"></div>
+    <div class="skeleton-line" style="height:22px;width:35%;margin-bottom:0;"></div>
+  </div>
+  <div class="stat-card">
+    <div class="skeleton-line" style="height:11px;width:65%;"></div>
+    <div class="skeleton-line" style="height:22px;width:35%;margin-bottom:0;"></div>
+  </div>
+  <div class="stat-card">
+    <div class="skeleton-line" style="height:11px;width:65%;"></div>
+    <div class="skeleton-line" style="height:22px;width:35%;margin-bottom:0;"></div>
+  </div>
+</div>
+
+<div id="updated" style="font-size:13px;color:#fff;font-style:italic;margin-top:10px;"></div>
+
+<script>
+  const JSON_URL = 'https://raw.githubusercontent.com/jdunfor5/MAS-Motus/main/data/latest_detections.json?t=' + Date.now();
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async function loadStats() {
+    try {
+      const res = await fetch(JSON_URL);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const detections = data.detections || [];
+
+      const total = detections.length;
+      const species = new Set(detections.map(d => d.scientificName).filter(Boolean)).size;
+      const birds = new Set(detections.map(d => d.tagId).filter(Boolean)).size;
+      const last = detections[0] && detections[0].date ? formatDate(detections[0].date) : '—';
+
+      document.getElementById('stats-bar').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Total detections</div>
+          <div class="stat-value">${total.toLocaleString()}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Unique species</div>
+          <div class="stat-value">${species}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Individual birds</div>
+          <div class="stat-value">${birds.toLocaleString()}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Last detection</div>
+          <div class="stat-value stat-date">${last}</div>
+        </div>
+      `;
+
+      const updatedEl = document.getElementById('updated');
+      if (data.updated) {
+        updatedEl.textContent = 'Last updated: ' + formatDate(data.updated);
+      } else {
+        updatedEl.textContent = '';
+      }
+
+    } catch (err) {
+      document.getElementById('stats-bar').innerHTML = '';
+      document.getElementById('updated').textContent = '';
+    }
+  }
+
+  loadStats();
+</script>
+</body>
+</html>
