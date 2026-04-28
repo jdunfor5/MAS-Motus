@@ -43,6 +43,7 @@ new_detections <- tbl(recv, 'alltags') %>%
     commonName = speciesEN,
     scientificName = speciesSci,
     tagId = mfgID,
+    motusTagID,
     project = tagProjName,
     projectId = id,
     sex = sex,
