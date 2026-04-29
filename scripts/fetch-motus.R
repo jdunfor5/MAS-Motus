@@ -22,7 +22,7 @@ metadata(recv)
 
 tag_deps <- tbl(recv, 'tagDeps') %>%
   collect() %>%
-  select(deployID, sex, age)
+  select(deployID, sex, age, bandNumber)
 
 proj_ids <- tbl(recv, 'projs') %>%
   collect() %>%
@@ -43,11 +43,13 @@ new_detections <- tbl(recv, 'alltags') %>%
     commonName = speciesEN,
     scientificName = speciesSci,
     tagId = mfgID,
-    motusTagID,
+    motusTagID = motusTagID,
     project = tagProjName,
     projectId = id,
     sex = sex,
     age = age,
+    bandNumber = bandNumber,
+    antBearing = antBearing,
     tagDepLat = tagDepLat,
     tagDepLon = tagDepLon
   ) %>%
@@ -68,7 +70,7 @@ if (file.exists(existing_path)) {
 }
 
 if (nrow(existing_detections) > 0) {
-  combined <- bind_rows(existing_detections, new_detections) %>%
+  combined <- bind_rows(new_detections, existing_detections) %>%
     distinct(id, .keep_all = TRUE) %>%
     arrange(desc(date))
 } else {
@@ -82,7 +84,7 @@ geocode_cache <- list()
 reverse_geocode <- function(lat, lon) {
   key <- paste0(round(lat, 4), ',', round(lon, 4))
   if (!is.null(geocode_cache[[key]])) return(geocode_cache[[key]])
-
+  
   Sys.sleep(1)
   tryCatch({
     res <- httr::GET(
@@ -97,9 +99,9 @@ reverse_geocode <- function(lat, lon) {
     location <- paste(
       Filter(Negate(is.null), list(
         if (!is.null(addr$city)) addr$city else
-        if (!is.null(addr$town)) addr$town else
-        if (!is.null(addr$village)) addr$village else
-        if (!is.null(addr$county)) addr$county else NULL,
+          if (!is.null(addr$town)) addr$town else
+            if (!is.null(addr$village)) addr$village else
+              if (!is.null(addr$county)) addr$county else NULL,
         if (!is.null(addr$state)) addr$state else NULL
       )),
       collapse = ', '
