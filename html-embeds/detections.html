@@ -4,16 +4,104 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: 'Source Sans 3', sans-serif;
     background: #ffffff;
-    color: #2c2c2a;
+    color: #000000;
     padding: 0.5rem 1rem;
   }
 
+  /* ── Filters ── */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    color: #5f5e5a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .filter-divider {
+    width: 1px;
+    height: 20px;
+    background: #e8e6df;
+    margin: 0 4px;
+  }
+
+  .filter-btn {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1.5px solid #d3d1c7;
+    background: #ffffff;
+    color: #5f5e5a;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .filter-btn:hover {
+    border-color: #3b6d11;
+    color: #27500a;
+  }
+
+  .filter-btn.active {
+    background: #1F6631;
+    border-color: #1F6631;
+    color: #ffffff;
+  }
+
+  /* Species dropdown */
+  .filter-select {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px;
+    padding: 3px 28px 3px 10px;
+    border-radius: 20px;
+    border: 1.5px solid #d3d1c7;
+    background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888780'/%3E%3C/svg%3E") no-repeat right 10px center;
+    background-size: 8px;
+    color: #5f5e5a;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s ease;
+    max-width: 220px;
+  }
+
+  .filter-select:hover {
+    border-color: #3b6d11;
+    color: #27500a;
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: #1F6631;
+  }
+
+  .filter-select.active-filter {
+    border-color: #1F6631;
+    color: #27500a;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%231F6631'/%3E%3C/svg%3E");
+  }
+
+  /* ── Error / No results ── */
   #error-msg {
     font-size: 14px;
     color: #a32d2d;
@@ -24,14 +112,23 @@
     background: #fcebeb;
   }
 
+  #no-results {
+    font-size: 14px;
+    color: #888780;
+    display: none;
+    padding: 1rem;
+    font-style: italic;
+  }
+
+  /* ── Grid ── */
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 14px;
-    height: 600px;
     padding-right: 4px;
   }
 
+  /* ── Card ── */
   .card {
     background: #ffffff;
     border: 2.5px solid #1F6631;
@@ -41,6 +138,8 @@
     transform: translateY(10px);
     transition: opacity 0.35s ease, transform 0.35s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     align-self: start;
+    position: relative;
+    overflow: hidden;
   }
 
   .card.visible {
@@ -53,6 +152,69 @@
     box-shadow: 0 2px 12px rgba(59,109,17,0.08);
   }
 
+  .card.hidden {
+    display: none;
+  }
+
+  /* ── Returning ribbon ── */
+  .ribbon {
+    position: absolute;
+    top: 18px;
+    right: -50px;
+    background: #c87f0a;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 3px 52px;
+    transform: rotate(45deg);
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  /* ── Card links ── */
+  .card-link {
+    transition: color 0.15s ease;
+  }
+  .card-link:hover {
+    color: #e67e00 !important;
+  }
+  .link-plain {
+    color: inherit !important;
+    text-decoration: none !important;
+    border-bottom: none !important;
+    cursor: default;
+  }
+
+  /* ── Filter funnel button ── */
+  .funnel-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 0 0 5px;
+    color: #b4b2a9;
+    font-size: 13px;
+    line-height: 1;
+    vertical-align: middle;
+    transition: color 0.15s ease;
+  }
+  .funnel-btn:hover {
+    color: #1F6631;
+  }
+
+  /* ── New detection star ── */
+  .new-star {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    line-height: 1;
+    color: cornflowerblue;
+    pointer-events: none;
+  }
+
+  /* ── Card content ── */
   .card-common {
     font-family: 'Lora', serif;
     font-size: 15px;
@@ -60,6 +222,7 @@
     color: #27500a;
     margin-bottom: 2px;
     line-height: 1.3;
+    padding-right: 32px;
   }
 
   .card-scientific {
@@ -91,7 +254,7 @@
 
   .meta-label {
     font-size: 11px;
-    color: #b4b2a9;
+    color: #5f5e5a;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     white-space: nowrap;
@@ -105,6 +268,7 @@
     line-height: 1.3;
   }
 
+  /* ── Skeleton ── */
   .skeleton-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -129,31 +293,16 @@
     50% { opacity: 0.5; }
   }
 
+  /* ── Mobile ── */
   @media (max-width: 480px) {
-    body {
-      padding: 0.5rem 0.75rem;
-    }
-
-    .grid, .skeleton-grid {
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-
-    .card, .skeleton-card {
-      padding: 0.85rem 1rem;
-    }
-
-    .card-common {
-      font-size: 14px;
-    }
-
-    .card-scientific {
-      font-size: 11px;
-    }
-
-    .meta-value {
-      font-size: 11px;
-    }
+    body { padding: 0.5rem 0.75rem; }
+    .grid, .skeleton-grid { grid-template-columns: 1fr; gap: 10px; }
+    .card, .skeleton-card { padding: 0.85rem 1rem; }
+    .card-common { font-size: 14px; }
+    .card-scientific { font-size: 11px; }
+    .meta-value { font-size: 11px; }
+    .filters { gap: 6px; }
+    .filter-select { max-width: 160px; }
   }
 </style>
 </head>
@@ -161,16 +310,46 @@
 
 <div id="error-msg">Unable to load detection data. Please try again later.</div>
 
+<div class="filters" id="filters" style="display:none;">
+  <span class="filter-label">Season</span>
+  <div class="filter-group" id="season-filters">
+    <button class="filter-btn active" data-season="all">All</button>
+    <button class="filter-btn" data-season="spring">Spring Migration</button>
+    <button class="filter-btn" data-season="fall">Fall Migration</button>
+    <button class="filter-btn" data-season="offseason">Off-Season</button>
+  </div>
+  <div class="filter-divider"></div>
+  <span class="filter-label">Year</span>
+  <div class="filter-group" id="year-filters"></div>
+  <div class="filter-divider"></div>
+  <span class="filter-label">Visit</span>
+  <div class="filter-group" id="visit-filters">
+    <button class="filter-btn active" data-visit="all">All</button>
+    <button class="filter-btn" data-visit="first">First Visit</button>
+    <button class="filter-btn" data-visit="returning">Returning</button>
+  </div>
+  <div style="width:100%;display:flex;align-items:center;gap:8px;padding-top:2px;">
+    <span class="filter-label">Species</span>
+    <select class="filter-select" id="species-select">
+      <option value="all">All species</option>
+    </select>
+  </div>
+</div>
+
 <div id="skeleton" class="skeleton-grid">
   <div class="skeleton-card"><div class="skeleton-line" style="height:14px;width:40%;"></div><div class="skeleton-line" style="height:18px;width:80%;"></div><div class="skeleton-line" style="height:12px;width:60%;"></div></div>
   <div class="skeleton-card"><div class="skeleton-line" style="height:14px;width:40%;"></div><div class="skeleton-line" style="height:18px;width:75%;"></div><div class="skeleton-line" style="height:12px;width:55%;"></div></div>
   <div class="skeleton-card"><div class="skeleton-line" style="height:14px;width:40%;"></div><div class="skeleton-line" style="height:18px;width:85%;"></div><div class="skeleton-line" style="height:12px;width:65%;"></div></div>
 </div>
 
+<div id="no-results">No detections match the selected filters.</div>
 <div id="grid" class="grid" style="display:none;"></div>
 
 <script>
   const JSON_URL = 'https://raw.githubusercontent.com/jdunfor5/MAS-Motus/main/data/detections.json?t=' + Date.now();
+
+  let allCards = [];
+  let activeFilters = { season: 'all', year: 'all', visit: 'all', species: 'all' };
 
   function formatDate(iso) {
     const d = new Date(iso);
@@ -180,10 +359,7 @@
   function formatTime(iso) {
     const d = new Date(iso);
     return d.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZone: 'America/New_York'
+      hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York'
     });
   }
 
@@ -196,43 +372,71 @@
     const slug = commonName.trim().replace(/\s+/g, '_');
     return `https://www.allaboutbirds.org/guide/${slug}/overview`;
   }
-  
-  function bearingToDirection(bearing) {
-    if (bearing === null || bearing === undefined) return null;
-    const dirs = ['North', 'Northeast', 'East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest'];
-    const index = Math.round(((bearing % 360) + 360) % 360 / 45) % 8;
-    return `${dirs[index]} (${Math.round(bearing)}°)`;
+
+  function getSeason(iso) {
+    const month = new Date(iso).getMonth() + 1;
+    if (month >= 3 && month <= 5) return 'spring';
+    if (month >= 8 && month <= 11) return 'fall';
+    return 'offseason';
   }
 
-  function buildCard(det, index) {
+  function getYear(iso) {
+    return String(new Date(iso).getFullYear());
+  }
+
+  function buildCard(det, isReturning) {
     const card = document.createElement('div');
     card.className = 'card';
-    card.style.transitionDelay = (index * 60) + 'ms';
+
+    card.dataset.season = det.date ? getSeason(det.date) : 'offseason';
+    card.dataset.year = det.date ? getYear(det.date) : 'unknown';
+    card.dataset.visit = isReturning ? 'returning' : 'first';
+    card.dataset.species = val(det.commonName, 'Unknown species');
+
+    if (isReturning) {
+      const ribbon = document.createElement('div');
+      ribbon.className = 'ribbon';
+      ribbon.textContent = 'Returning';
+      card.appendChild(ribbon);
+    } else {
+      const star = document.createElement('div');
+      star.className = 'new-star';
+      star.textContent = '★';
+      card.appendChild(star);
+    }
 
     const common = val(det.commonName, 'Unknown species');
-    const aabUrl= allAboutBirdsUrl(common);
-    const commonDisplay = aabUrl 
-      ? `<a href="${aabUrl}" target="_blank" rel="noopener" style="color:#27500a;text-decoration:none;border-bottom:1px dotted #3b6d11;">${common} <span style="font-size:10px;opacity:0.6;">🔗</span></a>`
+    const aabUrl = allAboutBirdsUrl(common);
+    const commonDisplay = aabUrl
+      ? `<a href="${aabUrl}" target="_blank" rel="noopener" class="card-link" style="color:#27500a;text-decoration:none;border-bottom:1px dotted #3b6d11;">${common}</a>`
       : common;
+
+    const funnelBtn = document.createElement('button');
+    funnelBtn.className = 'funnel-btn';
+    funnelBtn.title = `Filter by ${common}`;
+    funnelBtn.innerHTML = '<i class="ti ti-filter" aria-hidden="true"></i>';
+    funnelBtn.addEventListener('click', () => {
+      const select = document.getElementById('species-select');
+      select.value = common;
+      select.classList.add('active-filter');
+      activeFilters.species = common;
+      applyFilters();
+    });
 
     const sci = val(det.scientificName, '');
     const date = det.date ? formatDate(det.date) : 'Unknown';
     const time = det.date ? formatTime(det.date) : 'Unknown';
     const project = val(det.project, 'Unknown');
     const tagId = val(det.tagId, 'Unknown');
-    const motusTagID = det.motusTagID;
-    const tagDisplay = motusTagID
-      ? `<a href="https://motus.org/dashboard/#e=profile&d=animals&s=${motusTagID}" target="_blank" rel="noopener" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${tagId} <span style="font-size:10px;opacity:0.6;">🔗</span></a>`
-      : tagId;
 
-    const bearing = det.antBearing;
-    const bearingDisplay = bearing !== null && bearing !== undefined
-      ? bearingToDirection(bearing)
-      : 'Unknown';
+    const tagDeployID = det.tagDeployID;
+    const tagDisplay = tagDeployID
+      ? `<a href="https://motus.org/dashboard/#e=profile&d=animals&s=${tagDeployID}" target="_blank" rel="noopener" class="card-link" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${tagId}</a>`
+      : tagId;
 
     const projectId = det.projectId;
     const projectDisplay = projectId
-      ? `<a href="https://motus.org/dashboard/#e=profile&d=projects&s=${projectId}" target="_blank" rel="noopener" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${project} <span style="font-size:10px;opacity:0.6;">🔗</span></a>`
+      ? `<a href="https://motus.org/dashboard/#e=profile&d=projects&s=${projectId}" target="_blank" rel="noopener" class="card-link" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${project}</a>`
       : project;
 
     let sex = val(det.sex, 'Unknown');
@@ -247,10 +451,10 @@
     const lat = det.tagDepLat;
     const lon = det.tagDepLon;
     const locationDisplay = (lat && lon)
-      ? `<a href="https://motus.org/dashboard/#e=profile&d=tags&s=${tagId}" target="_blank" rel="noopener" style="color:#5f5e5a;text-decoration:none;border-bottom:1px dotted #b4b2a9;">${location} <span style="font-size:10px;opacity:0.6;">🔗</span></a>`
+      ? `<a href="https://motus.org/dashboard/#e=profile&d=tags&s=${tagId}" target="_blank" rel="noopener" class="link-plain">${location}</a>`
       : location;
 
-    card.innerHTML = `
+    card.innerHTML += `
       <div class="card-common">${commonDisplay}</div>
       <div class="card-scientific">${sci}</div>
       <hr class="card-divider">
@@ -280,17 +484,73 @@
           <span class="meta-value">${age}</span>
         </div>
         <div class="meta-row">
-          <span class="meta-label">Detected from</span>
-          <span class="meta-value">${bearingDisplay}</span>
-        </div>
-        <div class="meta-row">
           <span class="meta-label">Banded near</span>
           <span class="meta-value">${locationDisplay}</span>
         </div>
       </div>
     `;
 
+    card.querySelector('.card-common').appendChild(funnelBtn);
+
     return card;
+  }
+
+  function applyFilters() {
+    let visibleCount = 0;
+    allCards.forEach(({ card }) => {
+      const matchSeason = activeFilters.season === 'all' || card.dataset.season === activeFilters.season;
+      const matchYear = activeFilters.year === 'all' || card.dataset.year === activeFilters.year;
+      const matchVisit = activeFilters.visit === 'all' || card.dataset.visit === activeFilters.visit;
+      const matchSpecies = activeFilters.species === 'all' || card.dataset.species === activeFilters.species;
+      const visible = matchSeason && matchYear && matchVisit && matchSpecies;
+      card.classList.toggle('hidden', !visible);
+      if (visible) visibleCount++;
+    });
+    document.getElementById('no-results').style.display = visibleCount === 0 ? 'block' : 'none';
+  }
+
+  function setupFilterGroup(containerId, filterKey, dataAttr) {
+    const container = document.getElementById(containerId);
+    container.addEventListener('click', e => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilters[filterKey] = btn.dataset[dataAttr];
+      applyFilters();
+    });
+  }
+
+  function buildDynamicFilters(detections) {
+    const years = [...new Set(detections.map(d => getYear(d.date)))].sort((a, b) => b - a);
+    const yearContainer = document.getElementById('year-filters');
+    [{ label: 'All', value: 'all' }, ...years.map(y => ({ label: y, value: y }))].forEach(({ label, value }, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn' + (i === 0 ? ' active' : '');
+      btn.dataset.year = value;
+      btn.textContent = label;
+      yearContainer.appendChild(btn);
+    });
+
+    const species = [...new Set(detections.map(d => val(d.commonName, 'Unknown species')))].sort();
+    const speciesSelect = document.getElementById('species-select');
+    species.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s;
+      speciesSelect.appendChild(opt);
+    });
+
+    speciesSelect.addEventListener('change', () => {
+      const v = speciesSelect.value;
+      activeFilters.species = v;
+      speciesSelect.classList.toggle('active-filter', v !== 'all');
+      applyFilters();
+    });
+
+    setupFilterGroup('season-filters', 'season', 'season');
+    setupFilterGroup('year-filters', 'year', 'year');
+    setupFilterGroup('visit-filters', 'visit', 'visit');
   }
 
   async function loadDetections() {
@@ -301,12 +561,27 @@
 
       document.getElementById('skeleton').style.display = 'none';
 
+      const detections = data.detections || [];
+
+      // Track which tagDeployIDs have been seen to flag returning visitors
+      const seenDeploys = new Set();
+
+      buildDynamicFilters(detections);
+
       const grid = document.getElementById('grid');
       grid.style.display = 'grid';
 
-      data.detections.forEach((det, i) => {
-        grid.appendChild(buildCard(det, i));
+      detections.forEach((det, i) => {
+        const isReturning = det.tagDeployID && seenDeploys.has(det.tagDeployID);
+        if (det.tagDeployID) seenDeploys.add(det.tagDeployID);
+
+        const card = buildCard(det, isReturning);
+        card.style.transitionDelay = (i * 60) + 'ms';
+        grid.appendChild(card);
+        allCards.push({ card, det });
       });
+
+      document.getElementById('filters').style.display = 'flex';
 
       requestAnimationFrame(() => {
         document.querySelectorAll('.card').forEach(c => c.classList.add('visible'));
