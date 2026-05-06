@@ -9,6 +9,7 @@ A wildlife tracking dashboard built for the [Mecklenburg Audubon Society](https:
 ## Contents
 
 - [Overview](#overview)
+- [Update schedule](#update-schedule)
 - [Repository structure](#repository-structure)
 - [How it works](#how-it-works)
 - [Configuration & secrets](#configuration--secrets)
