@@ -9,8 +9,8 @@
 
   body {
     font-family: 'Source Sans 3', sans-serif;
-    background: transparent;
-    padding: 0.5rem 0;
+    background: #FFFFFF;
+    padding: 0.5rem 1rem;
   }
 
   .stats-bar {
@@ -21,7 +21,7 @@
 
   .stat-card {
   background: #ffffff;
-  border: 0.5px solid #d3d1c7;
+  border: 2.5px solid #1F6631;
   border-radius: 8px;
   padding: 0.85rem 1rem;
   }
@@ -56,6 +56,29 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
   }
+
+  @media (max-width: 480px) {
+    body {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .stats-bar {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat-card {
+      padding: 0.7rem 0.85rem;
+    }
+
+    .stat-value {
+      font-size: 18px;
+    }
+
+    .stat-value.stat-date {
+      font-size: 13px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -79,10 +102,10 @@
   </div>
 </div>
 
-<div id="updated" style="font-size:13px;color:#fff;font-style:italic;margin-top:10px;"></div>
+<div id="updated" style="font-size:13px;color:#27500a;font-style:italic;margin-top:10px;"></div>
 
 <script>
-  const JSON_URL = 'https://raw.githubusercontent.com/jdunfor5/MAS-Motus/main/data/latest_detections.json?t=' + Date.now();
+  const JSON_URL = 'https://raw.githubusercontent.com/jdunfor5/MAS-Motus/main/data/detections.json?t=' + Date.now();
 
   function formatDate(iso) {
     const d = new Date(iso);
