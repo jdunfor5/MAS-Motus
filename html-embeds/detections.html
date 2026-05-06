@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -37,10 +38,17 @@
     align-items: center;
   }
 
+  .filter-divider {
+    width: 1px;
+    height: 20px;
+    background: #e8e6df;
+    margin: 0 4px;
+  }
+
   .filter-btn {
     font-family: 'Source Sans 3', sans-serif;
     font-size: 12px;
-    padding: 4px 10px;
+    padding: 3px 10px;
     border-radius: 20px;
     border: 1.5px solid #d3d1c7;
     background: #ffffff;
@@ -60,11 +68,37 @@
     color: #ffffff;
   }
 
-  .filter-divider {
-    width: 1px;
-    height: 20px;
-    background: #e8e6df;
-    margin: 0 4px;
+  /* Species dropdown */
+  .filter-select {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px;
+    padding: 3px 28px 3px 10px;
+    border-radius: 20px;
+    border: 1.5px solid #d3d1c7;
+    background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888780'/%3E%3C/svg%3E") no-repeat right 10px center;
+    background-size: 8px;
+    color: #5f5e5a;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s ease;
+    max-width: 220px;
+  }
+
+  .filter-select:hover {
+    border-color: #3b6d11;
+    color: #27500a;
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: #1F6631;
+  }
+
+  .filter-select.active-filter {
+    border-color: #1F6631;
+    color: #27500a;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%231F6631'/%3E%3C/svg%3E");
   }
 
   /* ── Error / No results ── */
@@ -125,18 +159,59 @@
   /* ── Returning ribbon ── */
   .ribbon {
     position: absolute;
-    top: 14px;
-    right: -24px;
+    top: 18px;
+    right: -50px;
     background: #c87f0a;
     color: #ffffff;
     font-size: 9px;
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    padding: 3px 32px;
-    transform: rotate(35deg);
+    padding: 3px 52px;
+    transform: rotate(45deg);
     white-space: nowrap;
     box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  /* ── Card links ── */
+  .card-link {
+    transition: color 0.15s ease;
+  }
+  .card-link:hover {
+    color: #e67e00 !important;
+  }
+  .link-plain {
+    color: inherit !important;
+    text-decoration: none !important;
+    border-bottom: none !important;
+    cursor: default;
+  }
+
+  /* ── Filter funnel button ── */
+  .funnel-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 0 0 5px;
+    color: #b4b2a9;
+    font-size: 13px;
+    line-height: 1;
+    vertical-align: middle;
+    transition: color 0.15s ease;
+  }
+  .funnel-btn:hover {
+    color: #1F6631;
+  }
+
+  /* ── New detection star ── */
+  .new-star {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    line-height: 1;
+    color: cornflowerblue;
+    pointer-events: none;
   }
 
   /* ── Card content ── */
@@ -227,6 +302,7 @@
     .card-scientific { font-size: 11px; }
     .meta-value { font-size: 11px; }
     .filters { gap: 6px; }
+    .filter-select { max-width: 160px; }
   }
 </style>
 </head>
@@ -252,9 +328,12 @@
     <button class="filter-btn" data-visit="first">First Visit</button>
     <button class="filter-btn" data-visit="returning">Returning</button>
   </div>
-  <div class="filter-divider"></div>
-  <span class="filter-label">Species</span>
-  <div class="filter-group" id="species-filters"></div>
+  <div style="width:100%;display:flex;align-items:center;gap:8px;padding-top:2px;">
+    <span class="filter-label">Species</span>
+    <select class="filter-select" id="species-select">
+      <option value="all">All species</option>
+    </select>
+  </div>
 </div>
 
 <div id="skeleton" class="skeleton-grid">
@@ -317,15 +396,32 @@
     if (isReturning) {
       const ribbon = document.createElement('div');
       ribbon.className = 'ribbon';
-      ribbon.textContent = '↩ Returning';
+      ribbon.textContent = 'Returning';
       card.appendChild(ribbon);
+    } else {
+      const star = document.createElement('div');
+      star.className = 'new-star';
+      star.textContent = '★';
+      card.appendChild(star);
     }
 
     const common = val(det.commonName, 'Unknown species');
     const aabUrl = allAboutBirdsUrl(common);
     const commonDisplay = aabUrl
-      ? `<a href="${aabUrl}" target="_blank" rel="noopener" style="color:#27500a;text-decoration:none;border-bottom:1px dotted #3b6d11;">${common} <span style="font-size:10px;opacity:0.6;">↗</span></a>`
+      ? `<a href="${aabUrl}" target="_blank" rel="noopener" class="card-link" style="color:#27500a;text-decoration:none;border-bottom:1px dotted #3b6d11;">${common}</a>`
       : common;
+
+    const funnelBtn = document.createElement('button');
+    funnelBtn.className = 'funnel-btn';
+    funnelBtn.title = `Filter by ${common}`;
+    funnelBtn.innerHTML = '<i class="ti ti-filter" aria-hidden="true"></i>';
+    funnelBtn.addEventListener('click', () => {
+      const select = document.getElementById('species-select');
+      select.value = common;
+      select.classList.add('active-filter');
+      activeFilters.species = common;
+      applyFilters();
+    });
 
     const sci = val(det.scientificName, '');
     const date = det.date ? formatDate(det.date) : 'Unknown';
@@ -335,12 +431,12 @@
 
     const tagDeployID = det.tagDeployID;
     const tagDisplay = tagDeployID
-      ? `<a href="https://motus.org/dashboard/#e=profile&d=animals&s=${tagDeployID}" target="_blank" rel="noopener" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${tagId} <span style="font-size:10px;opacity:0.6;">↗</span></a>`
+      ? `<a href="https://motus.org/dashboard/#e=profile&d=animals&s=${tagDeployID}" target="_blank" rel="noopener" class="card-link" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${tagId}</a>`
       : tagId;
 
     const projectId = det.projectId;
     const projectDisplay = projectId
-      ? `<a href="https://motus.org/dashboard/#e=profile&d=projects&s=${projectId}" target="_blank" rel="noopener" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${project} <span style="font-size:10px;opacity:0.6;">↗</span></a>`
+      ? `<a href="https://motus.org/dashboard/#e=profile&d=projects&s=${projectId}" target="_blank" rel="noopener" class="card-link" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${project}</a>`
       : project;
 
     let sex = val(det.sex, 'Unknown');
@@ -355,7 +451,7 @@
     const lat = det.tagDepLat;
     const lon = det.tagDepLon;
     const locationDisplay = (lat && lon)
-      ? `<a href="https://motus.org/dashboard/#e=profile&d=tags&s=${tagId}" target="_blank" rel="noopener" style="color:#5f5e5a;text-decoration:none;border-bottom:1px dotted #b4b2a9;">${location} <span style="font-size:10px;opacity:0.6;">↗</span></a>`
+      ? `<a href="https://motus.org/dashboard/#e=profile&d=tags&s=${tagId}" target="_blank" rel="noopener" class="link-plain">${location}</a>`
       : location;
 
     card.innerHTML += `
@@ -393,6 +489,8 @@
         </div>
       </div>
     `;
+
+    card.querySelector('.card-common').appendChild(funnelBtn);
 
     return card;
   }
@@ -435,19 +533,24 @@
     });
 
     const species = [...new Set(detections.map(d => val(d.commonName, 'Unknown species')))].sort();
-    const speciesContainer = document.getElementById('species-filters');
-    [{ label: 'All', value: 'all' }, ...species.map(s => ({ label: s, value: s }))].forEach(({ label, value }, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'filter-btn' + (i === 0 ? ' active' : '');
-      btn.dataset.species = value;
-      btn.textContent = label;
-      speciesContainer.appendChild(btn);
+    const speciesSelect = document.getElementById('species-select');
+    species.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s;
+      speciesSelect.appendChild(opt);
+    });
+
+    speciesSelect.addEventListener('change', () => {
+      const v = speciesSelect.value;
+      activeFilters.species = v;
+      speciesSelect.classList.toggle('active-filter', v !== 'all');
+      applyFilters();
     });
 
     setupFilterGroup('season-filters', 'season', 'season');
     setupFilterGroup('year-filters', 'year', 'year');
     setupFilterGroup('visit-filters', 'visit', 'visit');
-    setupFilterGroup('species-filters', 'species', 'species');
   }
 
   async function loadDetections() {
