@@ -209,6 +209,61 @@
   .funnel-btn:hover {
     color: #1F6631;
   }
+  .funnel-btn.active-bird {
+    color: #1F6631;
+  }
+
+  /* ── Active bird filter pill ── */
+  #bird-filter-pill {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: #eef6e8;
+    border: 1.5px solid #1F6631;
+    border-radius: 20px;
+    padding: 4px 10px 4px 12px;
+    font-size: 12px;
+    color: #27500a;
+    width: fit-content;
+  }
+  #bird-filter-pill.visible {
+    display: flex;
+  }
+  .bird-pill-icon {
+    color: #1F6631;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .bird-pill-text {
+    flex: 1;
+    line-height: 1.3;
+  }
+  .bird-pill-species {
+    font-family: 'Lora', serif;
+    font-weight: 500;
+    color: #1F6631;
+  }
+  .bird-pill-tag {
+    color: #5f5e5a;
+    font-size: 11px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .bird-pill-clear {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #5f5e5a;
+    font-size: 15px;
+    line-height: 1;
+    padding: 0 0 0 4px;
+    transition: color 0.15s ease;
+    flex-shrink: 0;
+  }
+  .bird-pill-clear:hover {
+    color: #a32d2d;
+  }
 
   /* ── New detection ribbon ── */
   .ribbon-first {
@@ -335,6 +390,13 @@
       <option value="all">All species</option>
     </select>
   </div>
+  <div id="bird-filter-pill" style="margin-top:2px;">
+    <i class="ti ti-feather bird-pill-icon" aria-hidden="true"></i>
+    <span class="bird-pill-text">
+      <span class="bird-pill-species" id="bird-pill-species"></span><span class="bird-pill-tag" id="bird-pill-tag"></span>
+    </span>
+    <button class="bird-pill-clear" id="bird-pill-clear" title="Clear individual bird filter" aria-label="Clear individual bird filter">&#x2715;</button>
+  </div>
 </div>
 
 <div id="skeleton" class="skeleton-grid">
@@ -347,10 +409,10 @@
 <div id="grid" class="grid" style="display:none;"></div>
 
 <script>
-  const JSON_URL = 'https://raw.githubusercontent.com/jdunfor5/MAS-Motus/main/data/detections.json?t=' + Date.now();
+  const JSON_URL = 'https://raw.githubusercontent.com/sgagne-code/MAS-Motus/main/data/detections.json?t=' + Date.now();;
 
 let allCards = [];
-let activeFilters = { season: 'all', year: 'all', visit: 'all', species: 'all' };
+let activeFilters = { season: 'all', year: 'all', visit: 'all', species: 'all', tag: 'all', bird: 'all' };
 
 // ── Formatting helpers ──────────────────────────────────────────────────────
 
@@ -408,6 +470,8 @@ function buildCard(det, isReturning, visitNum, isNewSpecies) {
   card.dataset.year = det.date ? getYear(det.date) : 'unknown';
   card.dataset.visit = isReturning ? 'returning' : 'first';
   card.dataset.species = val(det.commonName, 'Unknown species');
+  card.dataset.tag = val(det.tagId, 'all');
+  card.dataset.birdKey = val(det.tagId, 'Unknown');
 
   // Ribbon: mauve for returning visits, gold for first-ever species, blue for first visit
   if (isReturning) {
@@ -433,16 +497,32 @@ function buildCard(det, isReturning, visitNum, isNewSpecies) {
     ? `<a href="${aabUrl}" target="_blank" rel="noopener" class="card-link" style="color:#27500a;text-decoration:none;border-bottom:1px dotted #3b6d11;">${common}</a>`
     : common;
 
-  // Funnel icon — clicking filters the grid to this species
+  
+  const tagId = val(det.tagId, 'Unknown');
+  // Funnel icon — clicking filters to this specific tagged individual and clears the species filter
   const funnelBtn = document.createElement('button');
   funnelBtn.className = 'funnel-btn';
-  funnelBtn.title = `Filter by ${common}`;
+  funnelBtn.title = `Filter by ${tagId}`;
   funnelBtn.innerHTML = '<i class="ti ti-filter" aria-hidden="true"></i>';
   funnelBtn.addEventListener('click', () => {
+    const tag = val(det.tagId, 'Unknown');
+
+    // Clear species filter
     const select = document.getElementById('species-select');
-    select.value = common;
-    select.classList.add('active-filter');
-    activeFilters.species = common;
+    select.value = 'all';
+    select.classList.remove('active-filter');
+    activeFilters.species = 'all';
+
+    // Set individual bird filter by tagId
+    activeFilters.bird = tag;
+
+    // Highlight all funnel buttons belonging to this bird
+    document.querySelectorAll('.funnel-btn').forEach(b => b.classList.remove('active-bird'));
+    document.querySelectorAll('.card[data-bird-key="' + CSS.escape(tag) + '"] .funnel-btn').forEach(b => b.classList.add('active-bird'));
+
+    // Show pill
+    showBirdPill(common, tag);
+
     applyFilters();
   });
 
@@ -450,7 +530,6 @@ function buildCard(det, isReturning, visitNum, isNewSpecies) {
   const date = det.date ? formatDate(det.date) : 'Unknown';
   const time = det.date ? formatTime(det.date) : 'Unknown';
   const project = val(det.project, 'Unknown');
-  const tagId = val(det.tagId, 'Unknown');
 
   // Link tag ID to Motus animal profile if a deploy ID is available
   const tagDeployID = det.tagDeployID;
@@ -530,11 +609,26 @@ function applyFilters() {
     const matchYear = activeFilters.year === 'all' || card.dataset.year === activeFilters.year;
     const matchVisit = activeFilters.visit === 'all' || card.dataset.visit === activeFilters.visit;
     const matchSpecies = activeFilters.species === 'all' || card.dataset.species === activeFilters.species;
-    const visible = matchSeason && matchYear && matchVisit && matchSpecies;
+    const matchTag = activeFilters.tag === 'all' || card.dataset.tag === activeFilters.tag;
+    const matchBird = activeFilters.bird === 'all' || card.dataset.birdKey === activeFilters.bird;
+    const visible = matchSeason && matchYear && matchVisit && matchSpecies && matchTag && matchBird;
     card.classList.toggle('hidden', !visible);
     if (visible) visibleCount++;
   });
   document.getElementById('no-results').style.display = visibleCount === 0 ? 'block' : 'none';
+}
+
+function showBirdPill(species, tagId) {
+  document.getElementById('bird-pill-species').textContent = species;
+  document.getElementById('bird-pill-tag').textContent = ' · Tag ' + tagId;
+  document.getElementById('bird-filter-pill').classList.add('visible');
+}
+
+function clearBirdFilter() {
+  activeFilters.bird = 'all';
+  document.getElementById('bird-filter-pill').classList.remove('visible');
+  document.querySelectorAll('.funnel-btn').forEach(b => b.classList.remove('active-bird'));
+  applyFilters();
 }
 
 // Wires up a group of filter buttons to update activeFilters and re-render
@@ -574,13 +668,20 @@ function buildDynamicFilters(detections) {
   speciesSelect.addEventListener('change', () => {
     const v = speciesSelect.value;
     activeFilters.species = v;
+    activeFilters.tag = 'all'; // changing species clears any active tag filter
     speciesSelect.classList.toggle('active-filter', v !== 'all');
+    // Any change to species dropdown clears the individual bird filter
+    activeFilters.bird = 'all';
+    document.getElementById('bird-filter-pill').classList.remove('visible');
+    document.querySelectorAll('.funnel-btn').forEach(b => b.classList.remove('active-bird'));
     applyFilters();
   });
 
   setupFilterGroup('season-filters', 'season', 'season');
   setupFilterGroup('year-filters', 'year', 'year');
   setupFilterGroup('visit-filters', 'visit', 'visit');
+
+  document.getElementById('bird-pill-clear').addEventListener('click', clearBirdFilter);
 }
 
 // ── Data loading ────────────────────────────────────────────────────────────
@@ -603,8 +704,8 @@ async function loadDetections() {
       .slice()
       .sort((a, b) => new Date(a.date) - new Date(b.date))
       .map(det => {
-        const deployId = det.tagDeployID;
-        const visitNum = deployId ? (visitCounts[deployId] = (visitCounts[deployId] || 0) + 1) : 0;
+        const tagKey = val(det.tagId, '');
+        const visitNum = tagKey ? (visitCounts[tagKey] = (visitCounts[tagKey] || 0) + 1) : 0;
         const speciesKey = val(det.commonName, '').toLowerCase();
         const isNewSpecies = speciesKey && !seenSpecies.has(speciesKey);
         if (speciesKey) seenSpecies.add(speciesKey);
