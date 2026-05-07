@@ -130,7 +130,7 @@ The viewer expects `data/detections.json` to follow this structure:
 ---
 
 ## HTML embeds
-The files in html-embeds/ are not executed by the repository. They serve as a version-controlled 
+The files in html-embeds are not executed by the repository. They serve as a version-controlled 
 reference for code that has been manually copied into Wix's HTML embed elements on the MAS webpage. 
 Each file corresponds to a labeled embed element on the site. To update the live page, copy the relevant 
 file's contents and paste it into the matching embed element in the Wix editor.
