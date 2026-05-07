@@ -349,277 +349,298 @@
 <script>
   const JSON_URL = 'https://raw.githubusercontent.com/jdunfor5/MAS-Motus/main/data/detections.json?t=' + Date.now();
 
-  let allCards = [];
-  let activeFilters = { season: 'all', year: 'all', visit: 'all', species: 'all' };
+let allCards = [];
+let activeFilters = { season: 'all', year: 'all', visit: 'all', species: 'all' };
 
-  function formatDate(iso) {
-    const d = new Date(iso);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+// ── Formatting helpers ──────────────────────────────────────────────────────
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York'
+  });
+}
+
+// Returns value if present, otherwise a fallback
+function val(v, fallback) {
+  return (v !== null && v !== undefined && v !== '') ? v : fallback;
+}
+
+// Builds an All About Birds URL from a common name (e.g. "Swainsons_Thrush")
+function allAboutBirdsUrl(commonName) {
+  if (!commonName) return null;
+  const slug = commonName.trim().replace(/'/g, '').replace(/\s+/g, '_');
+  return `https://www.allaboutbirds.org/guide/${slug}/overview`;
+}
+
+// Returns the migration season for a given date
+function getSeason(iso) {
+  const month = new Date(iso).getMonth() + 1;
+  if (month >= 3 && month <= 5) return 'spring';
+  if (month >= 8 && month <= 11) return 'fall';
+  return 'offseason';
+}
+
+function getYear(iso) {
+  return String(new Date(iso).getFullYear());
+}
+
+// Converts a visit number to an ordinal string e.g. 1 → "1st visit"
+function ordinal(n) {
+  const s = ['th','st','nd','rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]) + ' visit';
+}
+
+// ── Card builder ────────────────────────────────────────────────────────────
+
+function buildCard(det, isReturning, visitNum, isNewSpecies) {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  // Store filter-relevant values as data attributes for applyFilters()
+  card.dataset.season = det.date ? getSeason(det.date) : 'offseason';
+  card.dataset.year = det.date ? getYear(det.date) : 'unknown';
+  card.dataset.visit = isReturning ? 'returning' : 'first';
+  card.dataset.species = val(det.commonName, 'Unknown species');
+
+  // Ribbon: mauve for returning visits, gold for first-ever species, blue for first visit
+  if (isReturning) {
+    const ribbon = document.createElement('div');
+    ribbon.className = 'ribbon ribbon-returning';
+    ribbon.textContent = ordinal(visitNum);
+    card.appendChild(ribbon);
+  } else if (isNewSpecies) {
+    const ribbon = document.createElement('div');
+    ribbon.className = 'ribbon ribbon-new-species';
+    ribbon.textContent = 'New Species';
+    card.appendChild(ribbon);
+  } else {
+    const ribbon = document.createElement('div');
+    ribbon.className = 'ribbon ribbon-first';
+    ribbon.textContent = '1st Visit';
+    card.appendChild(ribbon);
   }
 
-  function formatTime(iso) {
-    const d = new Date(iso);
-    return d.toLocaleTimeString('en-US', {
-      hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York'
-    });
-  }
+  const common = val(det.commonName, 'Unknown species');
+  const aabUrl = allAboutBirdsUrl(common);
+  const commonDisplay = aabUrl
+    ? `<a href="${aabUrl}" target="_blank" rel="noopener" class="card-link" style="color:#27500a;text-decoration:none;border-bottom:1px dotted #3b6d11;">${common}</a>`
+    : common;
 
-  function val(v, fallback) {
-    return (v !== null && v !== undefined && v !== '') ? v : fallback;
-  }
+  // Funnel icon — clicking filters the grid to this species
+  const funnelBtn = document.createElement('button');
+  funnelBtn.className = 'funnel-btn';
+  funnelBtn.title = `Filter by ${common}`;
+  funnelBtn.innerHTML = '<i class="ti ti-filter" aria-hidden="true"></i>';
+  funnelBtn.addEventListener('click', () => {
+    const select = document.getElementById('species-select');
+    select.value = common;
+    select.classList.add('active-filter');
+    activeFilters.species = common;
+    applyFilters();
+  });
 
-  function allAboutBirdsUrl(commonName) {
-    if (!commonName) return null;
-    const slug = commonName.trim().replace(/'/g, '').replace(/\s+/g, '_');
-    return `https://www.allaboutbirds.org/guide/${slug}/overview`;
-  }
+  const sci = val(det.scientificName, '');
+  const date = det.date ? formatDate(det.date) : 'Unknown';
+  const time = det.date ? formatTime(det.date) : 'Unknown';
+  const project = val(det.project, 'Unknown');
+  const tagId = val(det.tagId, 'Unknown');
 
-  function getSeason(iso) {
-    const month = new Date(iso).getMonth() + 1;
-    if (month >= 3 && month <= 5) return 'spring';
-    if (month >= 8 && month <= 11) return 'fall';
-    return 'offseason';
-  }
+  // Link tag ID to Motus animal profile if a deploy ID is available
+  const tagDeployID = det.tagDeployID;
+  const tagDisplay = tagDeployID
+    ? `<a href="https://motus.org/dashboard/#e=profile&d=animals&s=${tagDeployID}" target="_blank" rel="noopener" class="card-link" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${tagId}</a>`
+    : tagId;
 
-  function getYear(iso) {
-    return String(new Date(iso).getFullYear());
-  }
+  // Link project name to Motus project profile if a project ID is available
+  const projectId = det.projectId;
+  const projectDisplay = projectId
+    ? `<a href="https://motus.org/dashboard/#e=profile&d=projects&s=${projectId}" target="_blank" rel="noopener" class="card-link" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${project}</a>`
+    : project;
 
-  function ordinal(n) {
-    const s = ['th','st','nd','rd'];
-    const v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]) + ' visit';
-  }
+  let sex = val(det.sex, 'Unknown');
+  if (sex === 'F') sex = 'Female';
+  else if (sex === 'M') sex = 'Male';
 
-  function buildCard(det, isReturning, visitNum, isNewSpecies) {
-    const card = document.createElement('div');
-    card.className = 'card';
+  let age = val(det.age, 'Unknown');
+  if (age === 'ad') age = 'Adult';
+  else if (age === 'imm') age = 'Immature';
 
-    card.dataset.season = det.date ? getSeason(det.date) : 'offseason';
-    card.dataset.year = det.date ? getYear(det.date) : 'unknown';
-    card.dataset.visit = isReturning ? 'returning' : 'first';
-    card.dataset.species = val(det.commonName, 'Unknown species');
+  const location = val(det.locationName, 'Pending');
+  const lat = det.tagDepLat;
+  const lon = det.tagDepLon;
+  // Link banding location to Motus tag profile if coordinates are available
+  const locationDisplay = (lat && lon)
+    ? `<a href="https://motus.org/dashboard/#e=profile&d=tags&s=${tagId}" target="_blank" rel="noopener" class="link-plain">${location}</a>`
+    : location;
 
-    if (isReturning) {
-      const ribbon = document.createElement('div');
-      ribbon.className = 'ribbon ribbon-returning';
-      ribbon.textContent = ordinal(visitNum);
-      card.appendChild(ribbon);
-    } else if (isNewSpecies) {
-      const ribbon = document.createElement('div');
-      ribbon.className = 'ribbon ribbon-new-species';
-      ribbon.textContent = 'New Species';
-      card.appendChild(ribbon);
-    } else {
-      const ribbon = document.createElement('div');
-      ribbon.className = 'ribbon ribbon-first';
-      ribbon.textContent = '1st Visit';
-      card.appendChild(ribbon);
-    }
-
-    const common = val(det.commonName, 'Unknown species');
-    const aabUrl = allAboutBirdsUrl(common);
-    const commonDisplay = aabUrl
-      ? `<a href="${aabUrl}" target="_blank" rel="noopener" class="card-link" style="color:#27500a;text-decoration:none;border-bottom:1px dotted #3b6d11;">${common}</a>`
-      : common;
-
-    const funnelBtn = document.createElement('button');
-    funnelBtn.className = 'funnel-btn';
-    funnelBtn.title = `Filter by ${common}`;
-    funnelBtn.innerHTML = '<i class="ti ti-filter" aria-hidden="true"></i>';
-    funnelBtn.addEventListener('click', () => {
-      const select = document.getElementById('species-select');
-      select.value = common;
-      select.classList.add('active-filter');
-      activeFilters.species = common;
-      applyFilters();
-    });
-
-    const sci = val(det.scientificName, '');
-    const date = det.date ? formatDate(det.date) : 'Unknown';
-    const time = det.date ? formatTime(det.date) : 'Unknown';
-    const project = val(det.project, 'Unknown');
-    const tagId = val(det.tagId, 'Unknown');
-
-    const tagDeployID = det.tagDeployID;
-    const tagDisplay = tagDeployID
-      ? `<a href="https://motus.org/dashboard/#e=profile&d=animals&s=${tagDeployID}" target="_blank" rel="noopener" class="card-link" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${tagId}</a>`
-      : tagId;
-
-    const projectId = det.projectId;
-    const projectDisplay = projectId
-      ? `<a href="https://motus.org/dashboard/#e=profile&d=projects&s=${projectId}" target="_blank" rel="noopener" class="card-link" style="color:#3b6d11;text-decoration:none;border-bottom:1px dotted #3b6d11;">${project}</a>`
-      : project;
-
-    let sex = val(det.sex, 'Unknown');
-    if (sex === 'F') sex = 'Female';
-    else if (sex === 'M') sex = 'Male';
-
-    let age = val(det.age, 'Unknown');
-    if (age === 'ad') age = 'Adult';
-    else if (age === 'imm') age = 'Immature';
-
-    const location = val(det.locationName, 'Pending');
-    const lat = det.tagDepLat;
-    const lon = det.tagDepLon;
-    const locationDisplay = (lat && lon)
-      ? `<a href="https://motus.org/dashboard/#e=profile&d=tags&s=${tagId}" target="_blank" rel="noopener" class="link-plain">${location}</a>`
-      : location;
-
-    card.innerHTML += `
-      <div class="card-common">${commonDisplay}</div>
-      <div class="card-scientific">${sci}</div>
-      <hr class="card-divider">
-      <div class="card-meta">
-        <div class="meta-row">
-          <span class="meta-label">Date</span>
-          <span class="meta-value">${date}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">Time</span>
-          <span class="meta-value">${time} ET</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">Tag</span>
-          <span class="meta-value">${tagDisplay}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">Project</span>
-          <span class="meta-value">${projectDisplay}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">Sex</span>
-          <span class="meta-value">${sex}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">Age</span>
-          <span class="meta-value">${age}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">Banded near</span>
-          <span class="meta-value">${locationDisplay}</span>
-        </div>
+  card.innerHTML += `
+    <div class="card-common">${commonDisplay}</div>
+    <div class="card-scientific">${sci}</div>
+    <hr class="card-divider">
+    <div class="card-meta">
+      <div class="meta-row">
+        <span class="meta-label">Date</span>
+        <span class="meta-value">${date}</span>
       </div>
-    `;
+      <div class="meta-row">
+        <span class="meta-label">Time</span>
+        <span class="meta-value">${time} ET</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Tag</span>
+        <span class="meta-value">${tagDisplay}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Project</span>
+        <span class="meta-value">${projectDisplay}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Sex</span>
+        <span class="meta-value">${sex}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Age</span>
+        <span class="meta-value">${age}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Banded near</span>
+        <span class="meta-value">${locationDisplay}</span>
+      </div>
+    </div>
+  `;
 
-    card.querySelector('.card-common').appendChild(funnelBtn);
+  card.querySelector('.card-common').appendChild(funnelBtn);
 
-    return card;
-  }
+  return card;
+}
 
-  function applyFilters() {
-    let visibleCount = 0;
-    allCards.forEach(({ card }) => {
-      const matchSeason = activeFilters.season === 'all' || card.dataset.season === activeFilters.season;
-      const matchYear = activeFilters.year === 'all' || card.dataset.year === activeFilters.year;
-      const matchVisit = activeFilters.visit === 'all' || card.dataset.visit === activeFilters.visit;
-      const matchSpecies = activeFilters.species === 'all' || card.dataset.species === activeFilters.species;
-      const visible = matchSeason && matchYear && matchVisit && matchSpecies;
-      card.classList.toggle('hidden', !visible);
-      if (visible) visibleCount++;
-    });
-    document.getElementById('no-results').style.display = visibleCount === 0 ? 'block' : 'none';
-  }
+// ── Filtering ───────────────────────────────────────────────────────────────
 
-  function setupFilterGroup(containerId, filterKey, dataAttr) {
-    const container = document.getElementById(containerId);
-    container.addEventListener('click', e => {
-      const btn = e.target.closest('.filter-btn');
-      if (!btn) return;
-      container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilters[filterKey] = btn.dataset[dataAttr];
-      applyFilters();
-    });
-  }
+function applyFilters() {
+  let visibleCount = 0;
+  allCards.forEach(({ card }) => {
+    const matchSeason = activeFilters.season === 'all' || card.dataset.season === activeFilters.season;
+    const matchYear = activeFilters.year === 'all' || card.dataset.year === activeFilters.year;
+    const matchVisit = activeFilters.visit === 'all' || card.dataset.visit === activeFilters.visit;
+    const matchSpecies = activeFilters.species === 'all' || card.dataset.species === activeFilters.species;
+    const visible = matchSeason && matchYear && matchVisit && matchSpecies;
+    card.classList.toggle('hidden', !visible);
+    if (visible) visibleCount++;
+  });
+  document.getElementById('no-results').style.display = visibleCount === 0 ? 'block' : 'none';
+}
 
-  function buildDynamicFilters(detections) {
-    const years = [...new Set(detections.map(d => getYear(d.date)))].sort((a, b) => b - a);
-    const yearContainer = document.getElementById('year-filters');
-    [{ label: 'All', value: 'all' }, ...years.map(y => ({ label: y, value: y }))].forEach(({ label, value }, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'filter-btn' + (i === 0 ? ' active' : '');
-      btn.dataset.year = value;
-      btn.textContent = label;
-      yearContainer.appendChild(btn);
-    });
+// Wires up a group of filter buttons to update activeFilters and re-render
+function setupFilterGroup(containerId, filterKey, dataAttr) {
+  const container = document.getElementById(containerId);
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilters[filterKey] = btn.dataset[dataAttr];
+    applyFilters();
+  });
+}
 
-    const species = [...new Set(detections.map(d => val(d.commonName, 'Unknown species')))].sort();
-    const speciesSelect = document.getElementById('species-select');
-    species.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s;
-      opt.textContent = s;
-      speciesSelect.appendChild(opt);
-    });
+// Builds year buttons and species dropdown dynamically from the loaded data
+function buildDynamicFilters(detections) {
+  const years = [...new Set(detections.map(d => getYear(d.date)))].sort((a, b) => b - a);
+  const yearContainer = document.getElementById('year-filters');
+  [{ label: 'All', value: 'all' }, ...years.map(y => ({ label: y, value: y }))].forEach(({ label, value }, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (i === 0 ? ' active' : '');
+    btn.dataset.year = value;
+    btn.textContent = label;
+    yearContainer.appendChild(btn);
+  });
 
-    speciesSelect.addEventListener('change', () => {
-      const v = speciesSelect.value;
-      activeFilters.species = v;
-      speciesSelect.classList.toggle('active-filter', v !== 'all');
-      applyFilters();
-    });
+  const species = [...new Set(detections.map(d => val(d.commonName, 'Unknown species')))].sort();
+  const speciesSelect = document.getElementById('species-select');
+  species.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    speciesSelect.appendChild(opt);
+  });
 
-    setupFilterGroup('season-filters', 'season', 'season');
-    setupFilterGroup('year-filters', 'year', 'year');
-    setupFilterGroup('visit-filters', 'visit', 'visit');
-  }
+  speciesSelect.addEventListener('change', () => {
+    const v = speciesSelect.value;
+    activeFilters.species = v;
+    speciesSelect.classList.toggle('active-filter', v !== 'all');
+    applyFilters();
+  });
 
-  async function loadDetections() {
-    try {
-      const res = await fetch(JSON_URL);
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data = await res.json();
+  setupFilterGroup('season-filters', 'season', 'season');
+  setupFilterGroup('year-filters', 'year', 'year');
+  setupFilterGroup('visit-filters', 'visit', 'visit');
+}
 
-      document.getElementById('skeleton').style.display = 'none';
+// ── Data loading ────────────────────────────────────────────────────────────
 
-      const detections = data.detections || [];
+async function loadDetections() {
+  try {
+    const res = await fetch(JSON_URL);
+    if (!res.ok) throw new Error('Network response was not ok');
+    const data = await res.json();
 
-      // Pre-calculate visit counts and new species in chronological order
-      const visitCounts = {};
-      const seenSpecies = new Set();
-      const detectionMeta = detections
-        .slice()
-        .sort((a, b) => new Date(a.date) - new Date(b.date))
-        .map(det => {
-          const deployId = det.tagDeployID;
-          const visitNum = deployId ? (visitCounts[deployId] = (visitCounts[deployId] || 0) + 1) : 0;
-          const speciesKey = val(det.commonName, '').toLowerCase();
-          const isNewSpecies = speciesKey && !seenSpecies.has(speciesKey);
-          if (speciesKey) seenSpecies.add(speciesKey);
-          return { det, visitNum, isNewSpecies };
-        });
+    document.getElementById('skeleton').style.display = 'none';
 
-      // Sort for display (most recent first)
-      detectionMeta.sort((a, b) => new Date(b.det.date) - new Date(a.det.date));
+    const detections = data.detections || [];
 
-      buildDynamicFilters(detections);
-
-      const grid = document.getElementById('grid');
-      grid.style.display = 'grid';
-
-      detectionMeta.forEach(({ det, visitNum, isNewSpecies }, i) => {
-        const isReturning = visitNum > 1;
-
-        const card = buildCard(det, isReturning, visitNum, isNewSpecies);
-        card.style.transitionDelay = (i * 60) + 'ms';
-        grid.appendChild(card);
-        allCards.push({ card, det });
+    // Pass 1: walk detections chronologically to assign visit numbers and flag
+    // the first occurrence of each species — order matters here
+    const visitCounts = {};
+    const seenSpecies = new Set();
+    const detectionMeta = detections
+      .slice()
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .map(det => {
+        const deployId = det.tagDeployID;
+        const visitNum = deployId ? (visitCounts[deployId] = (visitCounts[deployId] || 0) + 1) : 0;
+        const speciesKey = val(det.commonName, '').toLowerCase();
+        const isNewSpecies = speciesKey && !seenSpecies.has(speciesKey);
+        if (speciesKey) seenSpecies.add(speciesKey);
+        return { det, visitNum, isNewSpecies };
       });
 
-      document.getElementById('filters').style.display = 'flex';
+    // Pass 2: re-sort for display with most recent detections first
+    detectionMeta.sort((a, b) => new Date(b.det.date) - new Date(a.det.date));
 
-      requestAnimationFrame(() => {
-        document.querySelectorAll('.card').forEach(c => c.classList.add('visible'));
-      });
+    buildDynamicFilters(detections);
 
-    } catch (err) {
-      document.getElementById('skeleton').style.display = 'none';
-      document.getElementById('error-msg').style.display = 'block';
-    }
+    const grid = document.getElementById('grid');
+    grid.style.display = 'grid';
+
+    detectionMeta.forEach(({ det, visitNum, isNewSpecies }, i) => {
+      const isReturning = visitNum > 1;
+      const card = buildCard(det, isReturning, visitNum, isNewSpecies);
+      card.style.transitionDelay = (i * 60) + 'ms'; // stagger card fade-in animation
+      grid.appendChild(card);
+      allCards.push({ card, det });
+    });
+
+    document.getElementById('filters').style.display = 'flex';
+
+    // Trigger fade-in by adding .visible after cards are in the DOM
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.card').forEach(c => c.classList.add('visible'));
+    });
+
+  } catch (err) {
+    document.getElementById('skeleton').style.display = 'none';
+    document.getElementById('error-msg').style.display = 'block';
   }
+}
 
-  loadDetections();
+loadDetections();
 </script>
 </body>
 </html>
