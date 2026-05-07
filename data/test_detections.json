@@ -419,6 +419,34 @@
       "locationName": "Albemarle, NC",
       "tagDepLat": 35.350,
       "tagDepLon": -80.196
+    },
+    {
+      "commonName": "Blackpoll Warbler",
+      "scientificName": "Setophaga striata",
+      "date": "2023-09-05T06:14:00Z",
+      "tagId": "SUR-2301",
+      "tagDeployID": 48821,
+      "project": "Atlantic Coast Warbler Study",
+      "projectId": 312,
+      "sex": "M",
+      "age": "ad",
+      "locationName": "Manomet, MA",
+      "tagDepLat": 41.924,
+      "tagDepLon": -70.548
+    },
+    {
+      "commonName": "Blackpoll Warbler",
+      "scientificName": "Setophaga striata",
+      "date": "2023-09-06T06:14:00Z",
+      "tagId": "SUR-2301",
+      "tagDeployID": 48821,
+      "project": "Atlantic Coast Warbler Study",
+      "projectId": 312,
+      "sex": "M",
+      "age": "ad",
+      "locationName": "Manomet, MA",
+      "tagDepLat": 41.924,
+      "tagDepLon": -70.548
     }
   ]
 }
