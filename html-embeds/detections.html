@@ -156,12 +156,11 @@
     display: none;
   }
 
-  /* ── Returning ribbon ── */
+  /* ── Ribbons ── */
   .ribbon {
     position: absolute;
     top: 18px;
     right: -50px;
-    background: #c87f0a;
     color: #ffffff;
     font-size: 9px;
     font-weight: 600;
@@ -171,6 +170,14 @@
     transform: rotate(45deg);
     white-space: nowrap;
     box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  .ribbon-returning {
+    background: #AAD9BD;
+  }
+
+  .ribbon-new-species {
+    background: #c87f0a;
   }
 
   /* ── Card links ── */
@@ -203,15 +210,9 @@
     color: #1F6631;
   }
 
-  /* ── New detection star ── */
-  .new-star {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 20px;
-    line-height: 1;
-    color: cornflowerblue;
-    pointer-events: none;
+  /* ── New detection ribbon ── */
+  .ribbon-first {
+    background: cornflowerblue;
   }
 
   /* ── Card content ── */
@@ -369,7 +370,7 @@
 
   function allAboutBirdsUrl(commonName) {
     if (!commonName) return null;
-    const slug = commonName.trim().replace(/\s+/g, '_');
+    const slug = commonName.trim().replace(/'/g, '').replace(/\s+/g, '_');
     return `https://www.allaboutbirds.org/guide/${slug}/overview`;
   }
 
@@ -384,7 +385,13 @@
     return String(new Date(iso).getFullYear());
   }
 
-  function buildCard(det, isReturning) {
+  function ordinal(n) {
+    const s = ['th','st','nd','rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]) + ' visit';
+  }
+
+  function buildCard(det, isReturning, visitNum, isNewSpecies) {
     const card = document.createElement('div');
     card.className = 'card';
 
@@ -395,14 +402,19 @@
 
     if (isReturning) {
       const ribbon = document.createElement('div');
-      ribbon.className = 'ribbon';
-      ribbon.textContent = 'Returning';
+      ribbon.className = 'ribbon ribbon-returning';
+      ribbon.textContent = ordinal(visitNum);
+      card.appendChild(ribbon);
+    } else if (isNewSpecies) {
+      const ribbon = document.createElement('div');
+      ribbon.className = 'ribbon ribbon-new-species';
+      ribbon.textContent = 'New Species';
       card.appendChild(ribbon);
     } else {
-      const star = document.createElement('div');
-      star.className = 'new-star';
-      star.textContent = '★';
-      card.appendChild(star);
+      const ribbon = document.createElement('div');
+      ribbon.className = 'ribbon ribbon-first';
+      ribbon.textContent = '1st Visit';
+      card.appendChild(ribbon);
     }
 
     const common = val(det.commonName, 'Unknown species');
@@ -563,19 +575,33 @@
 
       const detections = data.detections || [];
 
-      // Track which tagDeployIDs have been seen to flag returning visitors
-      const seenDeploys = new Set();
+      // Pre-calculate visit counts and new species in chronological order
+      const visitCounts = {};
+      const seenSpecies = new Set();
+      const detectionMeta = detections
+        .slice()
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .map(det => {
+          const deployId = det.tagDeployID;
+          const visitNum = deployId ? (visitCounts[deployId] = (visitCounts[deployId] || 0) + 1) : 0;
+          const speciesKey = val(det.commonName, '').toLowerCase();
+          const isNewSpecies = speciesKey && !seenSpecies.has(speciesKey);
+          if (speciesKey) seenSpecies.add(speciesKey);
+          return { det, visitNum, isNewSpecies };
+        });
+
+      // Sort for display (most recent first)
+      detectionMeta.sort((a, b) => new Date(b.det.date) - new Date(a.det.date));
 
       buildDynamicFilters(detections);
 
       const grid = document.getElementById('grid');
       grid.style.display = 'grid';
 
-      detections.forEach((det, i) => {
-        const isReturning = det.tagDeployID && seenDeploys.has(det.tagDeployID);
-        if (det.tagDeployID) seenDeploys.add(det.tagDeployID);
+      detectionMeta.forEach(({ det, visitNum, isNewSpecies }, i) => {
+        const isReturning = visitNum > 1;
 
-        const card = buildCard(det, isReturning);
+        const card = buildCard(det, isReturning, visitNum, isNewSpecies);
         card.style.transitionDelay = (i * 60) + 'ms';
         grid.appendChild(card);
         allCards.push({ card, det });
